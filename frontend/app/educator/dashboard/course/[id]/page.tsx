@@ -29,6 +29,8 @@ type SubSection = {
     subSectionId?: number; // Keep for compatibility
     name: string;
     file_url: string;
+    youtube_video_url?: string; // YouTube video URL
+    is_free?: boolean; // Whether video is free
     type: 'video' | 'attachment' | 'code_file';
     section_id?: number;
     isEditing?: boolean; // For UI state management
@@ -428,7 +430,7 @@ export default function EducatorCoursePage() {
         const s = [...newSections];
         const subsection = s[secIdx].subSections[subIdx];
 
-        if (field === 'name' || field === 'file_url') {
+        if (field === 'name' || field === 'file_url' || field === 'youtube_video_url') {
             subsection[field] = value;
         } else if (
             field === 'type' &&
@@ -621,6 +623,7 @@ export default function EducatorCoursePage() {
             name?: string;
             type?: string;
             file_url?: string;
+            youtube_video_url?: string;
         },
     ) => {
         // Find the subsection by its actual ID, not by index
@@ -644,6 +647,7 @@ export default function EducatorCoursePage() {
                 name: updates.name?.trim(),
                 type: updates.type || 'video',
                 file_url: updates.file_url?.trim(),
+                youtube_video_url: updates.youtube_video_url?.trim() || null,
             });
             setNewSections([]);
             await fetchCourseDetails();
@@ -661,6 +665,8 @@ export default function EducatorCoursePage() {
                 subSectionId: sub.subSectionId || sub.id, // Keep both for compatibility
                 name: sub.name,
                 file_url: sub.file_url,
+                youtube_video_url: sub.youtube_video_url,
+                is_free: sub.is_free,
                 type: sub.type,
                 section_id: sub.section_id,
             })),
@@ -927,6 +933,35 @@ export default function EducatorCoursePage() {
                                                 />
                                             </div>
 
+                                            {/* YouTube URL Field - Only for videos */}
+                                            {sub.type === 'video' && (
+                                                <div className="lg:col-span-6">
+                                                    <label className="block text-sm font-medium text-gray-600 mb-1">
+                                                        YouTube Video URL (Optional - For Free Videos)
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        placeholder="Only if you want to add this video for free and give the YouTube link"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-red-500"
+                                                        value={sub.youtube_video_url || ''}
+                                                        onChange={(e) =>
+                                                            handleChangeSubsection(
+                                                                secIdx,
+                                                                subIdx,
+                                                                'youtube_video_url',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        disabled={!sub.isEditing}
+                                                    />
+                                                    {sub.youtube_video_url && (
+                                                        <p className="text-xs text-green-600 mt-1">
+                                                            ✓ This video will be marked as FREE
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            )}
+
                                             <div className="lg:col-span-2">
                                                 <label className="block text-sm font-medium text-gray-600 mb-1">
                                                     Type
@@ -983,6 +1018,8 @@ export default function EducatorCoursePage() {
                                                                         type: sub.type,
                                                                         file_url:
                                                                             sub.file_url,
+                                                                        youtube_video_url:
+                                                                            sub.youtube_video_url,
                                                                     },
                                                                 ).then(() =>
                                                                     toggleEditSubsection(

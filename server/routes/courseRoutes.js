@@ -15,7 +15,8 @@ import {
   getCoursesByAdmin,
   activateOrDeactivateCourse,
   reorderSections,
-  reorderSubSections
+  reorderSubSections,
+  bulkUpdateFreeStatus
 } from "../controllers/courseController.js";
 
 import {
@@ -49,6 +50,9 @@ courseRouter.put("/addSubsection/:sectionId", auth, isEducatorOrAdmin, addSubsec
 // Reordering routes
 courseRouter.put("/reorder-sections/:courseId", auth, isEducatorOrAdmin, reorderSections);
 courseRouter.put("/reorder-subsections/:sectionId", auth, isEducatorOrAdmin, reorderSubSections);
+
+// Bulk update free status route
+courseRouter.put("/bulk-update-free-status", auth, isEducatorOrAdmin, bulkUpdateFreeStatus);
 
 courseRouter.get("/", getCourses);
 courseRouter.get("/adminCourses", auth, isEducatorOrAdmin, getCoursesByAdmin);

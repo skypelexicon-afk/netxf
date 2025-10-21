@@ -4,6 +4,7 @@ import { eq, and, isNotNull, inArray, asc } from 'drizzle-orm';
 import logger from '../utils/logger.js';
 import SHA256 from "crypto-js/sha256.js";
 import { getVideoLength } from '../utils/bunnyVideo.js';
+import { extractYouTubeVideoId, generateYouTubeEmbedUrl } from '../utils/youtubeVideo.js';
 
 export const createCourse = async (req, res) => {
   try {
@@ -116,15 +117,20 @@ export const addSectionToCourse = async (req, res) => {
       let subsectionInserts = [];
       let subOrder = 0;
       for (const sub of subSectionsData) {
+        // Extract YouTube video ID if youtube_video_url is provided
+        const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
+        
         let temp = {
           name: sub.name,
           type: sub.type,
           file_url: sub.file_url,
+          youtube_video_url: youtubeVideoId ? sub.youtube_video_url : null,
+          is_free: youtubeVideoId ? true : (sub.is_free || false), // Auto-set to true if YouTube URL provided
           section_id: sectionId,
           order: subOrder++,
         }
-        // Fetch and include the video length if the file is a video
-        if (sub.type === "video") {
+        // Fetch and include the video length if the file is a video (only for Bunny videos)
+        if (sub.type === "video" && !youtubeVideoId) {
           try {
             temp["duration"] = await getVideoLength(sub.file_url);
           } catch (err) {
@@ -182,7 +188,7 @@ export const updateSection = async (req, res) => {
 export const updateSubSection = async (req, res) => {
   try {
     const subSectionID = parseInt(req.params.subSectionId);
-    const { name, type, file_url } = req.body;
+    const { name, type, file_url, youtube_video_url, is_free } = req.body;
 
     // Step 1: Insert the section
     const existing = await db
@@ -194,14 +200,23 @@ export const updateSubSection = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Subsection not found' });
     }
 
-    // Update the duration if it is a video
+    // Extract YouTube video ID if provided
+    const youtubeVideoId = youtube_video_url ? extractYouTubeVideoId(youtube_video_url) : null;
+    
+    // Update the duration if it is a video (only for Bunny videos)
     let duration = "";
-    if (type === "video") {
+    if (type === "video" && file_url && !youtubeVideoId) {
       try {
         duration = await getVideoLength(file_url);
       } catch (err) {
-        console.log("Error fetching video duration for video id: ", sub.file_url);
+        console.log("Error fetching video duration for video id: ", file_url);
       }
+    }
+
+    // Determine is_free value
+    let isFreeValue = is_free;
+    if (youtubeVideoId) {
+      isFreeValue = true; // Auto-set to true if YouTube URL provided
     }
 
     await db
@@ -210,6 +225,8 @@ export const updateSubSection = async (req, res) => {
         ...(name && { name }),
         ...(type && { type }),
         ...(file_url && { file_url }),
+        ...(youtube_video_url !== undefined && { youtube_video_url: youtubeVideoId ? youtube_video_url : null }),
+        ...(isFreeValue !== undefined && { is_free: isFreeValue }),
         ...{ duration },
         updated_at: new Date(),
       })
@@ -457,14 +474,26 @@ export const getCourseWithDetails = async (req, res) => {
       ...course,
       sections: course.sections.map((section) => ({
         ...section,
-        subSections: section.subSections.map((sub) => ({
-          subSectionId: sub.id,
-          name: sub.name,
-          // Assuming sub.file_url stores the video_id
-          file_url: sub.type === "video" ? generateSignedEmbedUrl(sub.file_url) : sub.file_url,
-          type: sub.type,
-          duration: sub.type === "video" ? sub.duration : "",
-        })),
+        subSections: section.subSections.map((sub) => {
+          // Extract YouTube video ID if youtube_video_url exists
+          const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
+          
+          let videoUrl = sub.file_url;
+          if (sub.type === "video") {
+            // Use YouTube embed if YouTube URL provided, otherwise use Bunny signed URL
+            videoUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : generateSignedEmbedUrl(sub.file_url);
+          }
+          
+          return {
+            subSectionId: sub.id,
+            name: sub.name,
+            file_url: videoUrl,
+            type: sub.type,
+            duration: sub.type === "video" ? sub.duration : "",
+            is_free: sub.is_free || false,
+            youtube_video_url: sub.youtube_video_url,
+          };
+        }),
       })),
     };
 
@@ -545,8 +574,6 @@ export const getCourseWithDetailsUnAuth = async (req, res) => {
   try {
     const { courseId } = req.params;
 
-
-
     const course = await db.query.courses.findFirst({
       where: and(eq(courses.id, courseId), eq(courses.is_active, true)),
       with: {
@@ -565,38 +592,47 @@ export const getCourseWithDetailsUnAuth = async (req, res) => {
       return res.status(404).json({ success: false, message: "Course not found" });
     }
 
-    // const videoIds = [];
-    // course.sections.forEach(section => {
-    //   section.subSections.forEach(sub => {
-    //     if (sub.type === "video") {
-    //       videoIds.push(sub.file_url);
-    //     }
-    //   });
-    // });
-
-    // const videoLengths = {};
-    // for (const videoId of videoIds) {
-    //   const length = await getVideoLength(videoId);
-    //   videoLengths[videoId] = length;
-    // }
+    // Count total free videos
+    let totalFreeVideos = 0;
+    course.sections.forEach(section => {
+      section.subSections.forEach(sub => {
+        if (sub.is_free) {
+          totalFreeVideos++;
+        }
+      });
+    });
 
     const modifiedCourse = {
       ...course,
+      totalFreeVideos, // Add total free videos count
       sections: course.sections.map(section => ({
         ...section,
-        subSections: section.subSections.map((sub) => ({
-          subSectionId: sub.id,
-          name: sub.name,
-          type: sub.type,
-          duration: sub.type === "video" ? sub.duration : "",
-          // lenght: sub.type === "video" ? videoLengths[sub.file_url] || "" : "",
-        }))
+        freeVideosCount: section.subSections.filter(sub => sub.is_free).length, // Count per section
+        subSections: section.subSections.map((sub) => {
+          // For free videos, include the video URL
+          let videoUrl = null;
+          if (sub.is_free && sub.type === "video") {
+            const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
+            videoUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : generateSignedEmbedUrl(sub.file_url);
+          }
+          
+          return {
+            subSectionId: sub.id,
+            name: sub.name,
+            type: sub.type,
+            duration: sub.type === "video" ? sub.duration : "",
+            is_free: sub.is_free || false,
+            file_url: videoUrl, // Only include URL for free videos
+            youtube_video_url: sub.is_free ? sub.youtube_video_url : null,
+          };
+        })
       }))
     }
+    
     return res.status(200).json({
       success: true,
-      isPurchased: true,
-      modifiedCourse
+      isPurchased: false,
+      course: modifiedCourse
     });
 
   } catch (error) {
@@ -626,15 +662,20 @@ export const addSubsectionsToSection = async (req, res) => {
 
     let newSubsections = [];
     for (const sub of subSectionsData) {
+      // Extract YouTube video ID if youtube_video_url is provided
+      const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
+      
       let temp = {
         name: sub.name,
         type: sub.type,
         file_url: sub.file_url,
+        youtube_video_url: youtubeVideoId ? sub.youtube_video_url : null,
+        is_free: youtubeVideoId ? true : (sub.is_free || false),
         section_id: sectionId,
         order: nextOrder++,
       }
-      // Fetch and include the video length if the file is a video
-      if (sub.type === "video") {
+      // Fetch and include the video length if the file is a video (only for Bunny videos)
+      if (sub.type === "video" && !youtubeVideoId) {
         try {
           temp["duration"] = await getVideoLength(sub.file_url);
         } catch (err) {
@@ -772,3 +813,51 @@ export const reorderSubSections = async (req, res) => {
     });
   }
 };
+
+/**
+ * Bulk update subsections to mark them as free or paid
+ * Endpoint: PUT /api/courses/bulk-update-free-status
+ * Body: { subsectionIds: [1, 2, 3], is_free: true }
+ */
+export const bulkUpdateFreeStatus = async (req, res) => {
+  try {
+    const { subsectionIds, is_free } = req.body;
+
+    if (!Array.isArray(subsectionIds) || subsectionIds.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'subsectionIds must be a non-empty array' 
+      });
+    }
+
+    if (typeof is_free !== 'boolean') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'is_free must be a boolean' 
+      });
+    }
+
+    // Update all subsections in the array
+    for (const subsectionId of subsectionIds) {
+      await db
+        .update(subSections)
+        .set({ 
+          is_free,
+          updated_at: new Date() 
+        })
+        .where(eq(subSections.id, subsectionId));
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: `${subsectionIds.length} subsection(s) updated successfully`,
+    });
+  } catch (error) {
+    console.error('Error bulk updating free status:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Failed to bulk update free status' 
+    });
+  }
+};
+

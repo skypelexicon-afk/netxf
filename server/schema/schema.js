@@ -84,6 +84,8 @@ export const subSections = pgTable("sub_sections", {
   file_url: text("file_url").notNull(),
   type: contentTypeEnum("type").notNull(),
   duration: text("duration"),
+  youtube_video_url: text("youtube_video_url"),
+  is_free: boolean("is_free").default(false),
   section_id: integer("section_id").notNull().references(() => sections.id),
   order: integer("order").notNull().default(0),
   created_at: timestamp("created_at").notNull().defaultNow(),
