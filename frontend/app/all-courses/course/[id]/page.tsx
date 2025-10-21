@@ -119,18 +119,33 @@ export default function PublicCoursePage() {
                         )}{' '}
                         Subsections
                     </p>
+                    {courseDetails?.totalFreeVideos && courseDetails.totalFreeVideos > 0 && (
+                        <p className="text-green-400 font-semibold mt-2">
+                            🎉 {courseDetails.totalFreeVideos} Free {courseDetails.totalFreeVideos === 1 ? 'Video' : 'Videos'} Available!
+                        </p>
+                    )}
                 </div>
 
-                {courseDetails?.sections?.map((section, sectionIndex) => (
+                {courseDetails?.sections?.map((section, sectionIndex) => {
+                    const freeSectionVideos = section.subSections.filter(sub => sub.is_free).length;
+                    
+                    return (
                     <div key={section.id} className="mt-4">
                         <div
                             onClick={() => toggleSection(section.id)}
                            // className="bg-gray-200 px-4 py-2 shadow-md flex justify-between items-center cursor-pointer border-2 border-gray-500 rounded hover:shadow-purple-500"
                             className="bg-yellow-200 px-4 py-2 text-yellow-800 shadow-md flex justify-between items-center cursor-pointer border-2 border-yellow-200 rounded hover:shadow-yellow-200"
                         >
-                            <h3 className="text-lg font-semibold">
-                                {sectionIndex + 1}. {section.name}
-                            </h3>
+                            <div className="flex items-center gap-2">
+                                <h3 className="text-lg font-semibold">
+                                    {sectionIndex + 1}. {section.name}
+                                </h3>
+                                {freeSectionVideos > 0 && (
+                                    <span className="bg-green-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                                        {freeSectionVideos} Free
+                                    </span>
+                                )}
+                            </div>
                             <FaChevronRight
                                 size={20}
                                 //className={`transition-transform text-violet-900 ${
@@ -154,50 +169,42 @@ export default function PublicCoursePage() {
                                    // className="py-2 px-4 border-b border-gray-300 flex justify-between items-center text-sm md:text-md hover:bg-purple-300"
                                     className="py-2 px-4 border-b border-yellow-200 flex text-yellow-800 justify-between items-center text-sm md:text-md hover:bg-yellow-800 hover:text-yellow-200"
                                 >
-                                    <div className="flex-1 flex justify-between">
-                                        <p className="line-clamp-2">
-                                            {sectionIndex + 1}.{subIndex + 1}{' '}
-                                            {sub.name}
-                                            {/* <span className="ml-2">
-                                                {sub.type === 'video' &&
-                                                    'Duration: '}
-                                                <span className="font-semibold">
-                                                    {sub.duration}
-                                                </span>
-                                            </span> */}
-                                            {sub.type === 'video' && (
-                                                <span //className="ml-2 text-gray-500"
-                                                className="ml-2 text-gray-500"
-                                                >
-                                                    Duration:{' '}
-                                                    <span //className="text-gray-800 font-semibold"
-                                                    className="text-gray-800 font-semibold"
-                                                    >
-                                                        {sub.duration}
+                                    <div className="flex-1 flex justify-between items-center">
+                                        <div className="flex items-center gap-2">
+                                            <p className="line-clamp-2">
+                                                {sectionIndex + 1}.{subIndex + 1}{' '}
+                                                {sub.name}
+                                                {sub.type === 'video' && (
+                                                    <span className="ml-2 text-gray-500">
+                                                        Duration:{' '}
+                                                        <span className="text-gray-800 font-semibold">
+                                                            {sub.duration}
+                                                        </span>
                                                     </span>
+                                                )}
+                                            </p>
+                                            {sub.is_free && (
+                                                <span className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                                                    FREE
                                                 </span>
                                             )}
-                                        </p>
+                                        </div>
                                         <div>
-                                            <FaLock //color="gray"
-                                            color="yellow-800"
-                                             />
+                                            {!sub.is_free && !hasPurchased && (
+                                                <FaLock color="yellow-800" />
+                                            )}
                                         </div>
                                     </div>
 
                                     {sub.type === 'video' &&
                                         sub.file_url &&
-                                        (hasPurchased ? (
+                                        (hasPurchased || sub.is_free ? (
                                             <span className="flex items-center gap-2 ml-4">
-                                                {/* <p className="hidden md:block font-semibold">
-                                                    {sub.duration}
-                                                </p> */}
                                                 <p className="hidden md:block font-semibold">
                                                     Watch:
                                                 </p>
                                                 <FaVideo
                                                     size={20}
-                                                   // className="text-blue-600 cursor-pointer"
                                                    className="text-blue-600 cursor-pointer"
                                                     onClick={() =>
                                                         setSelectedVideoUrl(
@@ -207,9 +214,7 @@ export default function PublicCoursePage() {
                                                 />
                                             </span>
                                         ) : (
-                                            <span //className="ml-4 text-red-500 text-xs"
-                                            className="ml-4 text-yellow-500 text-xs"
-                                            >
+                                            <span className="ml-4 text-yellow-500 text-xs">
                                                 Purchase required
                                             </span>
                                         ))}
@@ -217,7 +222,7 @@ export default function PublicCoursePage() {
                             ))}
                         </ul>
                     </div>
-                ))}
+                )})}
             </div>
 
             {selectedVideoUrl && (

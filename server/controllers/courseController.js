@@ -249,7 +249,39 @@ export const updateSubSection = async (req, res) => {
 export const getCourses = async (req, res) => {
   try {
     const allCourses = await db.select().from(courses).where(eq(courses.is_active, true));
-    res.status(200).json({ success: true, courses: allCourses });
+    
+    // For each course, count free videos
+    const coursesWithFreeCount = await Promise.all(
+      allCourses.map(async (course) => {
+        const courseSections = await db
+          .select()
+          .from(sections)
+          .where(eq(sections.course_id, course.id));
+        
+        const sectionIds = courseSections.map(s => s.id);
+        
+        let freeVideoCount = 0;
+        if (sectionIds.length > 0) {
+          const freeSubsections = await db
+            .select()
+            .from(subSections)
+            .where(
+              and(
+                inArray(subSections.section_id, sectionIds),
+                eq(subSections.is_free, true)
+              )
+            );
+          freeVideoCount = freeSubsections.length;
+        }
+        
+        return {
+          ...course,
+          totalFreeVideos: freeVideoCount
+        };
+      })
+    );
+    
+    res.status(200).json({ success: true, courses: coursesWithFreeCount });
   } catch (error) {
     console.error('Error fetching courses:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch courses' });

@@ -216,6 +216,11 @@ export default function StudentFaqList() {
                             )}{' '}
                             Subsections
                         </p>
+                        {courseDetails?.totalFreeVideos && courseDetails.totalFreeVideos > 0 && (
+                            <p className="text-green-600 font-semibold mt-2">
+                                🎉 {courseDetails.totalFreeVideos} Free {courseDetails.totalFreeVideos === 1 ? 'Video' : 'Videos'} Available!
+                            </p>
+                        )}
                         {isAuthorized && courseProgress && (
                             <div //className="mt-3 bg-purple-50 border border-purple-200 rounded-lg p-4"
                             className="mt-3 bg-yellow-800 border border-purple-200 rounded-lg p-4"
@@ -262,6 +267,8 @@ export default function StudentFaqList() {
                                 })
                                 .map((section, sectionIndex) => {
                                     const isExpanded = expandedSections.has(section.id);
+                                    const freeSectionVideos = section.subSections.filter(sub => sub.is_free).length;
+                                    
                                     return (
                                         <div key={section.id} className="mt-4 border border-gray-300 rounded-md">
                                             <div 
@@ -269,9 +276,16 @@ export default function StudentFaqList() {
                                                 className="bg-yellow-200 px-4 py-2 shadow-md text-yellow-800 flex items-center justify-between rounded-t-md border-b border-yellow-300 cursor-pointer hover:bg-yellow-800 hover:text-yellow-200 transition-colors"
                                                 onClick={() => toggleSection(section.id)}
                                             >
-                                                <h3 className="text-lg font-semibold">
-                                                    {sectionIndex + 1}. {section.name}
-                                                </h3>
+                                                <div className="flex items-center gap-2">
+                                                    <h3 className="text-lg font-semibold">
+                                                        {sectionIndex + 1}. {section.name}
+                                                    </h3>
+                                                    {freeSectionVideos > 0 && (
+                                                        <span className="bg-green-600 text-white px-2 py-0.5 rounded-full text-xs font-bold">
+                                                            {freeSectionVideos} Free
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {isExpanded ? <FaChevronUp size={20} /> : <FaChevronDown size={20} />}
                                             </div>
 
@@ -316,6 +330,11 @@ export default function StudentFaqList() {
                                                                             subSection.name
                                                                         }
                                                                     </p>
+                                                                    {subSection.is_free && (
+                                                                        <span className="bg-green-600 text-white px-2 py-0.5 rounded text-xs font-bold">
+                                                                            FREE
+                                                                        </span>
+                                                                    )}
                                                                 </div>
                                                                 {subSection.type ===
                                                                     'video' && (

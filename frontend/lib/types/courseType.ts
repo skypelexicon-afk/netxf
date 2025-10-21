@@ -28,6 +28,7 @@ export interface Course {
     faqs: FAQ[];
     educatorName: string;
     educatorImage: string;
+    totalFreeVideos?: number;
 }
 
 export interface SubSection {
@@ -38,6 +39,8 @@ export interface SubSection {
     duration: string;
     type: string;
     section_id: number;
+    youtube_video_url?: string;
+    is_free?: boolean;
     created_at: string;
     updated_at: string;
 }
@@ -49,6 +52,7 @@ export interface Section {
     created_at: string;
     updated_at: string;
     subSections: SubSection[];
+    freeVideosCount?: number;
 }
 
 // export interface FAQ {
@@ -84,6 +88,7 @@ export interface CourseDetails {
     updated_at: string;
     sections: Section[];
     faqs: FAQ[];
+    totalFreeVideos?: number;
 }
 
 export interface GetCourseDetailsResponse {

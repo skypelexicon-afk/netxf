@@ -18,6 +18,7 @@ interface CourseCardProps {
     price: number;
     originalPrice: number;
     discountLabel: string | number | undefined;
+    totalFreeVideos?: number;
 }
 
 const CourseCard: React.FC<CourseCardProps> = ({
@@ -30,6 +31,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
     price,
     originalPrice,
     discountLabel,
+    totalFreeVideos,
 }) => {
     const Router = useRouter();
     const [progressPercentage, setProgressPercentage] = useState<number | null>(null);
@@ -78,6 +80,11 @@ const CourseCard: React.FC<CourseCardProps> = ({
                         fill
                         className="object-fill"
                     />
+                    {totalFreeVideos && totalFreeVideos > 0 && (
+                        <div className="absolute top-2 right-2 bg-green-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                            {totalFreeVideos} Free {totalFreeVideos === 1 ? 'Video' : 'Videos'}
+                        </div>
+                    )}
                 </div>
             </div>
 
