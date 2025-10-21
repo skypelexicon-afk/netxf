@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light !important;
+}
+
+
+
+@layer components {
+  .style-links a {
+    @apply text-blue-500 underline hover:text-blue-700;
+  }
+}
+
