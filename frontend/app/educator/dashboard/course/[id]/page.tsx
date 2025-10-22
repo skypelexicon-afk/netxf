@@ -407,10 +407,11 @@ export default function EducatorCoursePage() {
         s[secIdx].subSections.push({
             name: '',
             file_url: '',
+            youtube_video_url: '',
             type: 'video',
             id: undefined,
             subSectionId: undefined,
-            isEditing: false,
+            isEditing: true, // Set to true for new subsections
         });
         setNewSections(s);
     };
@@ -903,14 +904,14 @@ export default function EducatorCoursePage() {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    disabled={!sub.isEditing}
+                                                    disabled={sub.id || sub.subSectionId ? !sub.isEditing : false}
                                                 />
                                             </div>
 
                                             <div className="lg:col-span-6">
                                                 <label className="block text-sm font-medium text-gray-600 mb-1">
                                                     {sub.type === 'video'
-                                                        ? 'Video URL'
+                                                        ? 'Bunny CDN Video URL (For Paid Students)'
                                                         : sub.type ===
                                                             'attachment'
                                                           ? 'File URL'
@@ -929,7 +930,7 @@ export default function EducatorCoursePage() {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    disabled={!sub.isEditing}
+                                                    disabled={sub.id || sub.subSectionId ? !sub.isEditing : false}
                                                 />
                                             </div>
 
@@ -937,12 +938,12 @@ export default function EducatorCoursePage() {
                                             {sub.type === 'video' && (
                                                 <div className="lg:col-span-6">
                                                     <label className="block text-sm font-medium text-gray-600 mb-1">
-                                                        YouTube Video URL (Optional - For Free Videos)
+                                                        YouTube Video URL (Optional - For Free/Non-Paid Students)
                                                     </label>
                                                     <input
                                                         type="url"
-                                                        placeholder="Only if you want to add this video for free and give the YouTube link"
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent placeholder-red-500"
+                                                        placeholder="Paste YouTube URL to make this video free for non-paid students"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                                         value={sub.youtube_video_url || ''}
                                                         onChange={(e) =>
                                                             handleChangeSubsection(
@@ -952,11 +953,11 @@ export default function EducatorCoursePage() {
                                                                 e.target.value,
                                                             )
                                                         }
-                                                        disabled={!sub.isEditing}
+                                                        disabled={sub.id || sub.subSectionId ? !sub.isEditing : false}
                                                     />
                                                     {sub.youtube_video_url && (
                                                         <p className="text-xs text-green-600 mt-1">
-                                                            ✓ This video will be marked as FREE
+                                                            ✓ This video will be FREE for non-paid students (YouTube)
                                                         </p>
                                                     )}
                                                 </div>
@@ -976,7 +977,7 @@ export default function EducatorCoursePage() {
                                                             e.target.value,
                                                         )
                                                     }
-                                                    disabled={!sub.isEditing}
+                                                    disabled={sub.id || sub.subSectionId ? !sub.isEditing : false}
                                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                                                 >
                                                     <option value="video">
@@ -991,7 +992,7 @@ export default function EducatorCoursePage() {
                                                 </select>
                                             </div>
                                             <div className="lg:col-span-2 flex gap-2">
-                                                {!sub.isEditing ? (
+                                                {(sub.id || sub.subSectionId) && !sub.isEditing ? (
                                                     <button
                                                         onClick={() =>
                                                             toggleEditSubsection(
@@ -1004,7 +1005,7 @@ export default function EducatorCoursePage() {
                                                     >
                                                         Edit
                                                     </button>
-                                                ) : (
+                                                ) : (sub.id || sub.subSectionId) ? (
                                                     <button
                                                         onClick={() => {
                                                             const subsectionId =
@@ -1038,6 +1039,10 @@ export default function EducatorCoursePage() {
                                                     >
                                                         Save
                                                     </button>
+                                                ) : (
+                                                    <span className="text-xs text-gray-500 px-2 py-2">
+                                                        Ready to create
+                                                    </span>
                                                 )}
                                             </div>
                                         </div>

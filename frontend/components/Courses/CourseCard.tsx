@@ -82,11 +82,9 @@ const CourseCard: React.FC<CourseCardProps> = ({
 
     return (
         <>
-            <div //className="md:w-[320px] mb-6 p-2 flex flex-col bg-white rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition duration-300 min-h-[20rem] border border-gray-200 mx-auto"
-            className="md:w-[320px] mb-6 p-2 flex flex-col bg-yellow-200 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition duration-300 min-h-[20rem] border border-yellow-200 mx-auto">
-                <div className="flex justify-between  px-2 pt-3 pb-1 ">
-                    <h3 //className="text-lg text-left font-bold text-gray-800 w-4/5 pr-2 break-words leading-snug line-clamp-2 min-h-[2.5rem]"
-                    className="text-lg text-left font-bold text-yellow-900 w-4/5 pr-2 break-words leading-snug line-clamp-2 min-h-[2.5rem]">
+            <div className="w-full md:w-[320px] mb-6 p-2 flex flex-col bg-yellow-200 rounded-lg overflow-hidden shadow-xl hover:shadow-2xl transition duration-300 border border-yellow-200 mx-auto h-full">
+                <div className="flex justify-between px-2 pt-3 pb-1">
+                    <h3 className="text-lg text-left font-bold text-yellow-900 w-4/5 pr-2 break-words leading-snug line-clamp-2 h-[3.5rem]">
                         {title}
                     </h3>
                     <ShareDropdown
@@ -96,7 +94,7 @@ const CourseCard: React.FC<CourseCardProps> = ({
                         type="course"
                     />
                 </div>
-                <div className="p-2 h-44">
+                <div className="p-2 h-44 flex-shrink-0">
                     <div className="relative w-full h-full rounded-lg overflow-hidden">
                         <Image
                             src={validImage}
@@ -112,42 +110,33 @@ const CourseCard: React.FC<CourseCardProps> = ({
                     </div>
                 </div>
 
-                <div //className="flex items-center gap-2 text-xs text-gray-600 p-2 line-clamp-2 min-h-[3rem]"
-                className="flex items-center gap-2 text-xs text-yellow-900 p-2 line-clamp-2 min-h-[3rem]">
+                <div className="flex items-center gap-2 text-xs text-yellow-900 p-2 line-clamp-2 h-[3rem] flex-shrink-0">
                     <FaUserGraduate className="text-xs" />
                     Targets {target}
                 </div>
 
-                <div //className="text-xs text-gray-500 text-left px-2 pb-1"
-                className="text-xs text-yellow-900 text-left px-2 pb-1">
+                <div className="text-xs text-yellow-900 text-left px-2 pb-1 flex-shrink-0">
                     <div>Starts on {formatDateWithSuffix(startDate)}</div>
                     <div>Ends on {formatDateWithSuffix(endDate)}</div>
                 </div>
 
-                <hr //className="border-t border-gray-200 mx-2"
-                className="border-t border-yellow-900 mx-2" />
+                <hr className="border-t border-yellow-900 mx-2 flex-shrink-0" />
 
-                <div className="flex items-center justify-between px-2 py-2">
+                <div className="flex items-center justify-between px-2 py-2 flex-shrink-0">
                     <div className="p-2">
-                        <span //className="text-lg font-bold text-black"
-                        className="text-lg font-bold text-green-600"
-                        >
+                        <span className="text-lg font-bold text-green-600">
                             ₹{price}
                         </span>
-                        <span   //className="line-through text-xs text-gray-400 ml-2"
-                        className="line-through text-xs text-yellow-900 ml-2"
-                        >
+                        <span className="line-through text-xs text-yellow-900 ml-2">
                             ₹{originalPrice}
                         </span>
                     </div>
-                    <div //className="text-green-600 text-xs font-semibold flex items-center gap-1"
-                    className="text-green-600 text-xs font-semibold flex items-center gap-1"
-                    >
+                    <div className="text-green-600 text-xs font-semibold flex items-center gap-1">
                         <FaTag /> {discountLabel}
                     </div>
                 </div>
 
-                <div className="flex gap-2 px-2 pb-4">
+                <div className="flex gap-2 px-2 pb-4 mt-auto flex-shrink-0">
                    <Link
   href={`/all-courses/explore/${id}`}
   //className="flex items-center justify-center flex-1 text-violet-600 border border-violet-600 text-base py-2 rounded-md text-center hover:bg-purple-50"

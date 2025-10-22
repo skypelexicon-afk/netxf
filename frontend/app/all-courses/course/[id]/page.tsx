@@ -197,8 +197,7 @@ export default function PublicCoursePage() {
                                     </div>
 
                                     {sub.type === 'video' &&
-                                        sub.file_url &&
-                                        (hasPurchased || sub.is_free ? (
+                                        (hasPurchased || sub.is_free) ? (
                                             <span className="flex items-center gap-2 ml-4">
                                                 <p className="hidden md:block font-semibold">
                                                     Watch:
@@ -206,18 +205,22 @@ export default function PublicCoursePage() {
                                                 <FaVideo
                                                     size={20}
                                                    className="text-blue-600 cursor-pointer"
-                                                    onClick={() =>
-                                                        setSelectedVideoUrl(
-                                                            sub.file_url!,
-                                                        )
-                                                    }
+                                                    onClick={() => {
+                                                        // Select video based on purchase status
+                                                        // Paid students → Bunny CDN (higher quality)
+                                                        // Non-paid students → YouTube (for free videos only)
+                                                        const videoUrl = hasPurchased 
+                                                            ? (sub.bunny_video_url || sub.file_url) 
+                                                            : (sub.youtube_video_url || sub.file_url);
+                                                        setSelectedVideoUrl(videoUrl || sub.file_url!);
+                                                    }}
                                                 />
                                             </span>
-                                        ) : (
+                                        ) : sub.type === 'video' ? (
                                             <span className="ml-4 text-yellow-500 text-xs">
                                                 Purchase required
                                             </span>
-                                        ))}
+                                        ) : null}
                                 </li>
                             ))}
                         </ul>

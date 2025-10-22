@@ -510,20 +510,26 @@ export const getCourseWithDetails = async (req, res) => {
           // Extract YouTube video ID if youtube_video_url exists
           const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
           
-          let videoUrl = sub.file_url;
+          // Generate both URLs separately
+          let bunnyVideoUrl = sub.file_url;
+          let youtubeEmbedUrl = null;
+          
           if (sub.type === "video") {
-            // Use YouTube embed if YouTube URL provided, otherwise use Bunny signed URL
-            videoUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : generateSignedEmbedUrl(sub.file_url);
+            // Generate Bunny signed URL
+            bunnyVideoUrl = generateSignedEmbedUrl(sub.file_url);
+            // Generate YouTube embed URL if available
+            youtubeEmbedUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : null;
           }
           
           return {
             subSectionId: sub.id,
             name: sub.name,
-            file_url: videoUrl,
+            file_url: bunnyVideoUrl, // Keep for backward compatibility
+            bunny_video_url: bunnyVideoUrl, // Bunny CDN URL (for paid students)
+            youtube_video_url: youtubeEmbedUrl, // YouTube URL (for non-paid students)
             type: sub.type,
             duration: sub.type === "video" ? sub.duration : "",
             is_free: sub.is_free || false,
-            youtube_video_url: sub.youtube_video_url,
           };
         }),
       })),

@@ -127,17 +127,15 @@ const AllCoursesPage = () => {
 
 
             <div>
-                <h2 //className="text-xl font-bold mb-4"
-                className="text-xl text-left font-bold mb-4 text-yellow-200 -mt-20 "
-                >All Courses</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <h2 className="text-xl text-left font-bold mb-4 text-yellow-200 -mt-20">All Courses</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                     {filteredCourses.map((course) =>
                         enrolledCourseIds.includes(course.id) ? (
-                            <div className="mx-auto" key={course.id}>
+                            <div className="flex" key={course.id}>
                                 <EnrolledCourseCard {...course} />
                             </div>
                         ) : (
-                            <div className="mx-auto" key={course.id}>
+                            <div className="flex" key={course.id}>
                                 <CourseCard {...course} />
                             </div>
                         ),
