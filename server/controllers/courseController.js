@@ -511,22 +511,46 @@ export const getCourseWithDetails = async (req, res) => {
           const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
           
           // Generate both URLs separately
-          let bunnyVideoUrl = sub.file_url;
+          let bunnyVideoUrl = null;
           let youtubeEmbedUrl = null;
+          let displayUrl = sub.file_url; // Default for non-video types
           
           if (sub.type === "video") {
-            // Generate Bunny signed URL
-            bunnyVideoUrl = generateSignedEmbedUrl(sub.file_url);
+            // Generate Bunny signed URL if file_url exists
+            const hasBunnyVideo = sub.file_url && sub.file_url.trim() !== '';
+            if (hasBunnyVideo) {
+              bunnyVideoUrl = generateSignedEmbedUrl(sub.file_url);
+            }
             // Generate YouTube embed URL if available
-            youtubeEmbedUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : null;
+            if (youtubeVideoId) {
+              youtubeEmbedUrl = generateYouTubeEmbedUrl(youtubeVideoId);
+            }
+            
+            // Video display logic for PAID students:
+            // 1. If both Bunny AND YouTube exist → use Bunny
+            // 2. If only YouTube exists → use YouTube
+            // 3. If only Bunny exists → use Bunny
+            if (hasBunnyVideo && youtubeEmbedUrl) {
+              // Both exist - paid students see Bunny
+              displayUrl = bunnyVideoUrl;
+            } else if (youtubeEmbedUrl) {
+              // Only YouTube exists - show to paid students too
+              displayUrl = youtubeEmbedUrl;
+            } else if (hasBunnyVideo) {
+              // Only Bunny exists - show to paid students
+              displayUrl = bunnyVideoUrl;
+            } else {
+              // Fallback to original file_url
+              displayUrl = sub.file_url;
+            }
           }
           
           return {
             subSectionId: sub.id,
             name: sub.name,
-            file_url: bunnyVideoUrl, // Keep for backward compatibility
+            file_url: displayUrl, // Primary display URL for paid students
             bunny_video_url: bunnyVideoUrl, // Bunny CDN URL (for paid students)
-            youtube_video_url: youtubeEmbedUrl, // YouTube URL (for non-paid students)
+            youtube_video_url: youtubeEmbedUrl, // YouTube URL (for free/non-paid students)
             type: sub.type,
             duration: sub.type === "video" ? sub.duration : "",
             is_free: sub.is_free || false,
@@ -649,9 +673,40 @@ export const getCourseWithDetailsUnAuth = async (req, res) => {
         subSections: section.subSections.map((sub) => {
           // For free videos, include the video URL
           let videoUrl = null;
+          let youtubeEmbedUrl = null;
+          let bunnyVideoUrl = null;
+          
           if (sub.is_free && sub.type === "video") {
             const youtubeVideoId = sub.youtube_video_url ? extractYouTubeVideoId(sub.youtube_video_url) : null;
-            videoUrl = youtubeVideoId ? generateYouTubeEmbedUrl(youtubeVideoId) : generateSignedEmbedUrl(sub.file_url);
+            
+            // Generate YouTube embed URL if available
+            if (youtubeVideoId) {
+              youtubeEmbedUrl = generateYouTubeEmbedUrl(youtubeVideoId);
+            }
+            
+            // Generate Bunny signed URL if file_url exists
+            const hasBunnyVideo = sub.file_url && sub.file_url.trim() !== '';
+            if (hasBunnyVideo) {
+              bunnyVideoUrl = generateSignedEmbedUrl(sub.file_url);
+            }
+            
+            // Video display logic for NON-PAID/FREE students:
+            // 1. If both Bunny AND YouTube exist → use YouTube
+            // 2. If only YouTube exists → use YouTube
+            // 3. If only Bunny exists → use Bunny (for free videos)
+            if (hasBunnyVideo && youtubeEmbedUrl) {
+              // Both exist - non-paid students see YouTube
+              videoUrl = youtubeEmbedUrl;
+            } else if (youtubeEmbedUrl) {
+              // Only YouTube exists
+              videoUrl = youtubeEmbedUrl;
+            } else if (hasBunnyVideo) {
+              // Only Bunny exists (for free videos)
+              videoUrl = bunnyVideoUrl;
+            } else {
+              // Fallback
+              videoUrl = sub.file_url;
+            }
           }
           
           return {
@@ -661,7 +716,8 @@ export const getCourseWithDetailsUnAuth = async (req, res) => {
             duration: sub.type === "video" ? sub.duration : "",
             is_free: sub.is_free || false,
             file_url: videoUrl, // Only include URL for free videos
-            youtube_video_url: sub.is_free ? sub.youtube_video_url : null,
+            bunny_video_url: bunnyVideoUrl, // Bunny URL for reference
+            youtube_video_url: youtubeEmbedUrl, // YouTube URL
           };
         })
       }))

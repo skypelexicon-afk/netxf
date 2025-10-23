@@ -253,18 +253,6 @@ export default function StudentFaqList() {
                     {courseDetails?.sections?.length ? (
                         <div className="my-4">
                             {courseDetails.sections
-                                .slice()
-                                .sort((a, b) => {
-                                    const numA = parseInt(
-                                        a.name.match(/\d+/)?.[0] || '0',
-                                        10,
-                                    );
-                                    const numB = parseInt(
-                                        b.name.match(/\d+/)?.[0] || '0',
-                                        10,
-                                    );
-                                    return numA - numB;
-                                })
                                 .map((section, sectionIndex) => {
                                     const isExpanded = expandedSections.has(section.id);
                                     const freeSectionVideos = section.subSections.filter(sub => sub.is_free).length;
@@ -294,22 +282,6 @@ export default function StudentFaqList() {
                                                 className="bg-yellow-200 text-yellow-800 max-h-96 opacity-100 overflow-y-auto"
                                                 >
                                                     {section.subSections
-                                                        .slice()
-                                                        .sort((a, b) => {
-                                                            const numA = parseInt(
-                                                                a.name.match(
-                                                                    /\d+/,
-                                                                )?.[0] || '0',
-                                                                10,
-                                                            );
-                                                            const numB = parseInt(
-                                                                b.name.match(
-                                                                    /\d+/,
-                                                                )?.[0] || '0',
-                                                                10,
-                                                            );
-                                                            return numA - numB;
-                                                        }) // sort subsections
                                                         .map((subSection, subIndex) => (
                                                             <li
                                                                 key={
